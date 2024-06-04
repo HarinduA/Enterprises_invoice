@@ -1,0 +1,159 @@
+// Method to generate email body from items in the database
+static string GenerateEmailBody(string username)
+{
+    // Get current date and time
+    string currentDate = DateTime.Now.ToString("dd-MMM-yyyy");
+    string currentTime = DateTime.Now.ToString("HH:mm:ss");
+
+    // Variables to store subtotal, VAT, and total
+    double subtotal = 0;
+    double vat = 0;
+    double total = 0;
+
+    string emailBody = $@"
+    <!DOCTYPE html>
+    <html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Receipt</title>
+        <style>
+            /* Receipt Styling */
+            body {{
+                font-family: sans-serif;
+                margin: 0;
+                padding: 2rem;
+            }}
+            .receipt-container {{
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                padding: 2rem;
+                width: 600px;
+            }}
+            .receipt-header {{
+                text-align: center;
+                margin-bottom: 2rem;
+            }}
+            .receipt-header h1 {{
+                font-size: 1.5rem;
+                margin: 0;
+            }}
+            .receipt-info-container {{
+                border: 2px solid #c7e5fc;
+                border-radius: 5px;
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }}
+            .receipt-info {{
+                display: flex;
+                justify-content: space-between;
+            }}
+            .receipt-info p {{
+                margin: 0;
+            }}
+            .receipt-table-container {{
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                padding: 1rem;
+            }}
+            .receipt-table {{
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0 1rem;
+            }}
+            .receipt-table thead th {{
+                border-bottom: 1px solid #ddd;
+                padding: 1rem 0.5rem;
+                text-align: left;
+                background-color: #c0c3c3;
+            }}
+            .receipt-table tbody tr td {{
+                padding: 0.5rem 1rem;
+                border: 1px solid white;
+                border-radius: 5px;
+                background-color: white;
+            }}
+            .receipt-table tfoot tr:last-child td {{
+                border-bottom: none;
+                font-weight: bold;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class='receipt-container'>
+            <div class='receipt-header'>
+                <h1>Test Invoice</h1>
+            </div>
+            <div class='receipt-info-container'>
+                <div class='receipt-info'>
+                    <p>
+                        Username: {username}<br>
+                        Bill Date: {currentDate}<br>
+                        Billed Time: {currentTime}
+                    </p>
+                </div>
+            </div>
+            <div class='receipt-table-container'>
+                <table class='receipt-table'>
+                    <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string query = "SELECT itemCode, description, qty, price, amount FROM items";
+        SqlCommand command = new SqlCommand(query, connection);
+        connection.Open();
+        SqlDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            emailBody += "<tr>";
+            emailBody += $"<td>{reader["itemCode"]}</td>";
+            emailBody += $"<td>{reader["description"]}</td>";
+            emailBody += $"<td>{reader["qty"]}</td>";
+            emailBody += $"<td>{Convert.ToDouble(reader["price"]).ToString("F2")}</td>";
+            emailBody += $"<td>{Convert.ToDouble(reader["amount"]).ToString("F2")}</td>";
+            emailBody += "</tr>";
+
+            // Increment subtotal
+            subtotal += Convert.ToDouble(reader["amount"]);
+        }
+        reader.Close();
+
+        // Calculate VAT and total
+        vat = subtotal * 0.15;
+        total = subtotal + vat;
+    }
+
+    emailBody += @"
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan='4'>Subtotal</th>
+                            <td id='subtotal'>" + subtotal.ToString("F2") + @"</td>
+                        </tr>
+                        <tr>
+                            <th colspan='4'>VAT (15%)</th>
+                            <td id='vat'>" + vat.ToString("F2") + @"</td>
+                        </tr>
+                        <tr>
+                            <th colspan='4'>Total</th>
+                            <td id='total'>" + total.ToString("F2") + @"</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>";
+
+    return emailBody;
+}
