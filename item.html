@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item page</title>
+</head>
+
+<body>
+
+    <h1>User items</h1>
+    <p id="productName"></p>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Function to get URL parameters
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                var results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            };
+
+            // Get the product name from the URL
+            const productName = getUrlParameter('product');
+
+            // Display the product name on the page
+            const productNameElement = document.getElementById('productName');
+            if (productNameElement) {
+                productNameElement.textContent = productName;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
